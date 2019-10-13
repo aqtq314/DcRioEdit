@@ -1,4 +1,4 @@
-﻿<Window x:Class="DcRioEdit.MainWindow"
+﻿<Window x:Class="DcRioEdit.MainWindow" x:Name="Root"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -6,9 +6,108 @@
         xmlns:local="clr-namespace:DcRioEdit"
         xmlns:vm="clr-namespace:DcRioEdit.Models;assembly=DcRioEdit.Models"
         mc:Ignorable="d"
-        DataContext="{x:Static vm:DesignerViewModels.testByteList}"
-        Title="MainWindow" Width="1280" Height="720">
-  <Grid>
-    <vm:ByteTile/>
-  </Grid>
+        Title="MainWindow" Width="1280" Height="720"
+        FontFamily="Segoe UI, Microsoft Yahei">
+  <FrameworkElement.DataContext>
+    <vm:MasterViewModel Window="{x:Reference Root}"/>
+  </FrameworkElement.DataContext>
+  <DockPanel>
+    <DockPanel DockPanel.Dock="Top">
+      <Button Padding="18,1" Content="打开 Rio.arc" vm:Behaviors.ClickBehavior="{Binding OpenFileBehavior}"/>
+      <local:OptionPanel OptionValue="{Binding Archive.Value.AsBoxed}">
+        <local:OptionPanel.NoneTemplate>
+          <DataTemplate/>
+        </local:OptionPanel.NoneTemplate>
+        <local:OptionPanel.SomeTemplate>
+          <DataTemplate>
+            <TextBlock Margin="5,0" Text="{Binding FilePath}" VerticalAlignment="Center"/>
+          </DataTemplate>
+        </local:OptionPanel.SomeTemplate>
+      </local:OptionPanel>
+    </DockPanel>
+    <local:OptionPanel OptionValue="{Binding Archive.Value.AsBoxed}">
+      <local:OptionPanel.NoneTemplate>
+        <DataTemplate/>
+      </local:OptionPanel.NoneTemplate>
+      <local:OptionPanel.SomeTemplate>
+        <DataTemplate>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="200"/>
+              <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <ListBox ItemsSource="{Binding FilesViewSource}" IsSynchronizedWithCurrentItem="True">
+              <ItemsControl.ItemContainerStyle>
+                <Style TargetType="{x:Type ListBoxItem}">
+                  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                </Style>
+              </ItemsControl.ItemContainerStyle>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <DockPanel>
+                    <TextBlock Text="{Binding FileName}" FontSize="16" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding ContentLengthString}" FontSize="10" VerticalAlignment="Center" Opacity="0.8" TextAlignment="Right"/>
+                  </DockPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ListBox>
+            <local:OptionPanel Grid.Column="1" OptionValue="{Binding CurrentFile.Value.AsBoxed}">
+              <local:OptionPanel.NoneTemplate>
+                <DataTemplate/>
+              </local:OptionPanel.NoneTemplate>
+              <local:OptionPanel.SomeTemplate>
+                <DataTemplate>
+                  <Grid>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="2*"/>
+                      <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible">
+                      <vm:ByteTile ScriptFile="{Binding}" VerticalOffset="{Binding ScrollOffsetW.Value, Mode=TwoWay}"/>
+                    </ScrollViewer>
+                    <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1" SnapsToDevicePixels="True">
+                      <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding Transcriptions}" VirtualizingPanel.IsVirtualizing="True">
+                        <Control.Template>
+                          <ControlTemplate TargetType="{x:Type ItemsControl}">
+                            <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible">
+                              <ItemsPresenter Margin="3"/>
+                            </ScrollViewer>
+                          </ControlTemplate>
+                        </Control.Template>
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="TranscriptionWidths"/>
+                                <ColumnDefinition/>
+                              </Grid.ColumnDefinitions>
+                              <!--<Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                              </Grid.RowDefinitions>-->
+                              <TextBlock Grid.Row="0" Grid.Column="0" Margin="3,0" FontSize="13" Text="{Binding RangeText.Value}"/>
+                              <!--<Button Grid.Row="1" Grid.Column="0" Padding="5,0" Content="删除" HorizontalAlignment="Left" vm:Behaviors.ClickBehavior="{Binding RemoveSelfBehavior}"/>-->
+                              <TextBlock Grid.Row="0" Grid.Column="1" Margin="3,0" FontSize="13" Text="{Binding Text.Value}" FontFamily="Meiryo"/>
+                              <!--<TextBox Grid.Row="1" Grid.Column="1" FontSize="16" Text="{Binding TranslationW.Value, Mode=TwoWay}" TextWrapping="Wrap"/>-->
+                            </Grid>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </Border>
+                    <GridSplitter Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,0,0,-3" Height="3"/>
+                  </Grid>
+                </DataTemplate>
+              </local:OptionPanel.SomeTemplate>
+            </local:OptionPanel>
+            <GridSplitter Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,0,-3,0" Width="6"/>
+          </Grid>
+        </DataTemplate>
+      </local:OptionPanel.SomeTemplate>
+    </local:OptionPanel>
+  </DockPanel>
 </Window>

@@ -53,6 +53,9 @@ type Range (startValue, endValue) =
         Range.ofValuesChecked x.Start y.Start,
         Range.ofValuesChecked x.End y.End
 
+    member x.Contains value =
+        value >= x.Start && value < x.End
+
     static member inline union y (x : Range) = x.Union y
     static member inline intersect y (x : Range) = x.Intersect y
     static member inline except y (x : Range) = x.Except y

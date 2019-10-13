@@ -11,26 +11,36 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|x64.ActiveCfg = Debug|x64
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|x64.Build.0 = Debug|x64
+		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|x86.ActiveCfg = Debug|x86
+		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Debug|x86.Build.0 = Debug|x86
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|x64.ActiveCfg = Release|x64
 		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|x64.Build.0 = Release|x64
+		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|x86.ActiveCfg = Release|x86
+		{DC244FC1-8739-4E12-A2EE-2921B109341B}.Release|x86.Build.0 = Release|x86
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|x64.ActiveCfg = Debug|x64
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|x64.Build.0 = Debug|x64
+		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|x86.ActiveCfg = Debug|x86
+		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Debug|x86.Build.0 = Debug|x86
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|x64.ActiveCfg = Release|x64
 		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|x64.Build.0 = Release|x64
+		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|x86.ActiveCfg = Release|x86
+		{1CB10FC7-9308-41D6-9D63-E3A28C1A74DB}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
