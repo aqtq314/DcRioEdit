@@ -113,14 +113,14 @@ module ByteTileSheet =
         paint.IsAntialias <- true
         paint.StrokeWidth <- 1.0f
         paint.PathEffect <- SKPathEffect.CreateCorner (3.0f)
-        paint.XferMode <- blendMode
+        paint.BlendMode <- blendMode
         paint
-    let selectionTintPaint   = makePaint (SKColor.ofIntValue 0xFF420763) SKPaintStyle.Fill SKXferMode.Screen
-    let selectionBorderPaint = makePaint (SKColor.ofIntValue 0xFF6F2995) SKPaintStyle.Stroke SKXferMode.Multiply
-    let selectionFillPaint   = makePaint (SKColor.ofIntValue 0xFFE4CCF1) SKPaintStyle.Fill SKXferMode.Multiply
-    let deletionBorderPaint = makePaint (SKColor.ofIntValue 0xFFDE3535) SKPaintStyle.Stroke SKXferMode.Src
-    let mouseOverPaint = makePaint (SKColor.ofIntValue 0xFF9BD031) SKPaintStyle.Stroke SKXferMode.Src
-    let mouseDownPaint = makePaint (SKColor.ofIntValue 0xFFE4CCF1) SKPaintStyle.Fill SKXferMode.Multiply
+    let selectionTintPaint   = makePaint (SKColor.ofIntValue 0xFF420763) SKPaintStyle.Fill SKBlendMode.Screen
+    let selectionBorderPaint = makePaint (SKColor.ofIntValue 0xFF6F2995) SKPaintStyle.Stroke SKBlendMode.Multiply
+    let selectionFillPaint   = makePaint (SKColor.ofIntValue 0xFFE4CCF1) SKPaintStyle.Fill SKBlendMode.Multiply
+    let deletionBorderPaint = makePaint (SKColor.ofIntValue 0xFFDE3535) SKPaintStyle.Stroke SKBlendMode.Src
+    let mouseOverPaint = makePaint (SKColor.ofIntValue 0xFF9BD031) SKPaintStyle.Stroke SKBlendMode.Src
+    let mouseDownPaint = makePaint (SKColor.ofIntValue 0xFFE4CCF1) SKPaintStyle.Fill SKBlendMode.Multiply
 
     let charTileBitmap =
         let bitmap = new SKBitmap (charWidth * rowCharCount, charCount / rowCharCount * charHeight, SKColorType.Bgra8888, SKAlphaType.Premul)
@@ -138,22 +138,22 @@ module ByteTileSheet =
                     let offset = getCharDrawOffset rowCharCount 0 false (int charByte)
                     SKPoint (offset.X, offset.Y + float32 (i * 6 + 8))))
             |> Array.concat
-        canvas.DrawText (
+        canvas.DrawPositionedText (
             String.concat "" controlCharNames,
             controlCharOffsets,
             controlPaint)
 
-        canvas.DrawText (
+        canvas.DrawPositionedText (
             shiftJis.GetString asciiChars,
             [| for i in asciiChars -> getCharDrawOffset rowCharCount asciiVOffset false (int i) |],
             asciiPaint)
 
-        canvas.DrawText (
+        canvas.DrawPositionedText (
             shiftJis.GetString kanjiChars,
             [| for i in kanjiChars -> getCharDrawOffset rowCharCount kanjiVOffset false (int i) |],
             kanjiPaint)
 
-        canvas.DrawText (
+        canvas.DrawPositionedText (
             String.replicate unusedChars.Length "·",
             [| for i in unusedChars -> getCharDrawOffset rowCharCount unusedVOffset false (int i) |],
             unusedPaint)

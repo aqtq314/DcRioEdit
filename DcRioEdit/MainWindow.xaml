@@ -6,14 +6,15 @@
         xmlns:local="clr-namespace:DcRioEdit"
         xmlns:vm="clr-namespace:DcRioEdit.Models;assembly=DcRioEdit.Models"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1280" Height="720"
+        Title="MainWindow" Width="1280" Height="720" WindowStartupLocation="CenterOwner"
         FontFamily="Segoe UI, Microsoft Yahei">
+  <!--d:DataContext="{x:Static vm:DesignerViewModels.masterViewModel}"-->
   <FrameworkElement.DataContext>
     <vm:MasterViewModel Window="{x:Reference Root}"/>
   </FrameworkElement.DataContext>
   <DockPanel>
     <DockPanel DockPanel.Dock="Top">
-      <Button Padding="18,1" Content="打开 Rio.arc" vm:Behaviors.ClickBehavior="{Binding OpenFileBehavior}"/>
+      <Button Padding="15,2" Content="打开 Rio.jp.arc" vm:Behaviors.ClickBehavior="{Binding OpenFileBehavior}"/>
       <local:OptionPanel OptionValue="{Binding Archive.Value.AsBoxed}">
         <local:OptionPanel.NoneTemplate>
           <DataTemplate/>
@@ -31,81 +32,86 @@
       </local:OptionPanel.NoneTemplate>
       <local:OptionPanel.SomeTemplate>
         <DataTemplate>
-          <Grid>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="200"/>
-              <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <ListBox ItemsSource="{Binding FilesViewSource}" IsSynchronizedWithCurrentItem="True">
-              <ItemsControl.ItemContainerStyle>
-                <Style TargetType="{x:Type ListBoxItem}">
-                  <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                </Style>
-              </ItemsControl.ItemContainerStyle>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                  <DockPanel>
-                    <TextBlock Text="{Binding FileName}" FontSize="16" VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding ContentLengthString}" FontSize="10" VerticalAlignment="Center" Opacity="0.8" TextAlignment="Right"/>
-                  </DockPanel>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ListBox>
-            <local:OptionPanel Grid.Column="1" OptionValue="{Binding CurrentFile.Value.AsBoxed}">
-              <local:OptionPanel.NoneTemplate>
-                <DataTemplate/>
-              </local:OptionPanel.NoneTemplate>
-              <local:OptionPanel.SomeTemplate>
-                <DataTemplate>
-                  <Grid>
-                    <Grid.RowDefinitions>
-                      <RowDefinition Height="2*"/>
-                      <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible">
-                      <vm:ByteTile ScriptFile="{Binding}" VerticalOffset="{Binding ScrollOffsetW.Value, Mode=TwoWay}"/>
-                    </ScrollViewer>
-                    <Border Grid.Row="1" BorderBrush="Black" BorderThickness="1" SnapsToDevicePixels="True">
-                      <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding Transcriptions}" VirtualizingPanel.IsVirtualizing="True">
-                        <Control.Template>
-                          <ControlTemplate TargetType="{x:Type ItemsControl}">
-                            <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible">
-                              <ItemsPresenter Margin="3"/>
-                            </ScrollViewer>
-                          </ControlTemplate>
-                        </Control.Template>
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <VirtualizingStackPanel/>
-                          </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                          <DataTemplate>
-                            <Grid>
-                              <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" SharedSizeGroup="TranscriptionWidths"/>
-                                <ColumnDefinition/>
-                              </Grid.ColumnDefinitions>
-                              <!--<Grid.RowDefinitions>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                              </Grid.RowDefinitions>-->
-                              <TextBlock Grid.Row="0" Grid.Column="0" Margin="3,0" FontSize="13" Text="{Binding RangeText.Value}"/>
-                              <!--<Button Grid.Row="1" Grid.Column="0" Padding="5,0" Content="删除" HorizontalAlignment="Left" vm:Behaviors.ClickBehavior="{Binding RemoveSelfBehavior}"/>-->
-                              <TextBlock Grid.Row="0" Grid.Column="1" Margin="3,0" FontSize="13" Text="{Binding Text.Value}" FontFamily="Meiryo"/>
-                              <!--<TextBox Grid.Row="1" Grid.Column="1" FontSize="16" Text="{Binding TranslationW.Value, Mode=TwoWay}" TextWrapping="Wrap"/>-->
-                            </Grid>
-                          </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                      </ItemsControl>
-                    </Border>
-                    <GridSplitter Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,0,0,-3" Height="3"/>
-                  </Grid>
-                </DataTemplate>
-              </local:OptionPanel.SomeTemplate>
-            </local:OptionPanel>
-            <GridSplitter Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,0,-3,0" Width="6"/>
-          </Grid>
+          <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+              <Button Padding="15,2" Content="导入 translation.csv" vm:Behaviors.ClickBehavior="{Binding LoadTranslationBehavior}"/>
+            </StackPanel>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition/>
+              </Grid.ColumnDefinitions>
+              <ListBox ItemsSource="{Binding FilesViewSource}" IsSynchronizedWithCurrentItem="True">
+                <ItemsControl.ItemContainerStyle>
+                  <Style TargetType="{x:Type ListBoxItem}">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                  </Style>
+                </ItemsControl.ItemContainerStyle>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <DockPanel>
+                      <TextBlock Text="{Binding FileName}" FontSize="16" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding ContentLengthString}" FontSize="10" VerticalAlignment="Center" Opacity="0.8" TextAlignment="Right"/>
+                    </DockPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ListBox>
+              <local:OptionPanel Grid.Column="1" OptionValue="{Binding CurrentFile.Value.AsBoxed}">
+                <local:OptionPanel.NoneTemplate>
+                  <DataTemplate/>
+                </local:OptionPanel.NoneTemplate>
+                <local:OptionPanel.SomeTemplate>
+                  <DataTemplate>
+                    <Grid>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
+                        <RowDefinition/>
+                      </Grid.RowDefinitions>
+                      <ScrollViewer CanContentScroll="True" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible">
+                        <vm:ByteTile ScriptFile="{Binding}" VerticalOffset="{Binding ScrollOffsetW.Value, Mode=TwoWay}"/>
+                      </ScrollViewer>
+                      <Border Grid.Row="1" BorderBrush="Silver" BorderThickness="0 1 0 0" SnapsToDevicePixels="True">
+                        <ItemsControl Grid.IsSharedSizeScope="True" ItemsSource="{Binding Transcriptions}" VirtualizingPanel.IsVirtualizing="True">
+                          <Control.Template>
+                            <ControlTemplate TargetType="{x:Type ItemsControl}">
+                              <ScrollViewer CanContentScroll="True" VerticalScrollBarVisibility="Visible">
+                                <ItemsPresenter Margin="3"/>
+                              </ScrollViewer>
+                            </ControlTemplate>
+                          </Control.Template>
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <VirtualizingStackPanel/>
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Grid Margin="0 4">
+                                <Grid.ColumnDefinitions>
+                                  <ColumnDefinition Width="Auto" SharedSizeGroup="TranscriptionWidths"/>
+                                  <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                  <RowDefinition/>
+                                  <RowDefinition/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Margin="3,-2" FontSize="11" Opacity="0.9" Text="{Binding RangeText.Value}"/>
+                                <!--<Button Grid.Row="1" Grid.Column="0" Padding="5,0" Content="删除" HorizontalAlignment="Left" vm:Behaviors.ClickBehavior="{Binding RemoveSelfBehavior}"/>-->
+                                <TextBlock Grid.Row="0" Grid.Column="1" Margin="3,-2" FontSize="11" Opacity="0.7" Text="{Binding Text.Value}" FontFamily="Meiryo"/>
+                                <TextBox Grid.Row="1" Grid.Column="1" FontSize="16" Text="{Binding TranslationW.Value, Mode=TwoWay}"/>
+                              </Grid>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </Border>
+                      <GridSplitter Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="0,0,0,-3" Height="3"/>
+                    </Grid>
+                  </DataTemplate>
+                </local:OptionPanel.SomeTemplate>
+              </local:OptionPanel>
+              <GridSplitter Background="Transparent" HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="0,0,-3,0" Width="6"/>
+            </Grid>
+          </DockPanel>
         </DataTemplate>
       </local:OptionPanel.SomeTemplate>
     </local:OptionPanel>

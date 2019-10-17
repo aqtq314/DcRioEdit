@@ -1,5 +1,6 @@
 ﻿namespace DcRioEdit.Models
 
+open FSharp.Data
 open Microsoft.Win32
 open System
 open System.Collections.Generic
@@ -85,6 +86,17 @@ type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
 
     member x.TranscribeText range =
         ScriptFileViewModel.transcribeText x.Content range
+
+    member x.LoadTranslations translations =
+        seq { x.Transcriptions.Count - 1 .. -1 .. 0 }
+        |> Seq.iter x.Transcriptions.RemoveAt
+
+        translations
+        |> Seq.map(fun (startIndex, endIndex, translationText) ->
+            let range = Range.ofStartEnd(startIndex, endIndex)
+            let transcriptionText = x.TranscribeText range
+            Transcription(buildContext, range, transcriptionText, translationText))
+        |> Seq.iter x.Transcriptions.Add
 
     member x.GetTranscriptionMinStart (item : Transcription) =
         let index = transcriptions.IndexOf item
@@ -223,6 +235,9 @@ type ArchiveViewModel (filePath, formats) =
             | _ -> WpfNone
         currFile |> St.set newCurrFile)
 
+    do  let index = files |> Seq.tryFindIndex (fun file -> file.Transcriptions.Count > 0)
+        Option.iter (filesViewSource.MoveCurrentToPosition >> ignore) index
+
     member x.FilePath : string = filePath
     member x.Formats : ArraySeg<FormatViewModel> = formats
     member x.Files = files
@@ -234,6 +249,33 @@ type ArchiveViewModel (filePath, formats) =
     static member load filePath (archiveModel : Archive) =
         let formats = ArraySeg.mapOfArray FormatViewModel.load archiveModel.Formats
         ArchiveViewModel (filePath, formats)
+
+    member x.LoadTranslationBehavior =
+        let rec click = behavior {
+            let! (e : BehaviorClickEventArgs) = ()
+
+            let dialog = OpenFileDialog ()
+            dialog.Filter <- "CSV 文件|*.csv"
+            let showDialogResult = dialog.ShowDialog ()
+            if showDialogResult.Value then
+                do  try let csv = CsvFile.Load (dialog.FileName, hasHeaders=false)
+                        let rows = Array.ofSeq csv.Rows
+                        let rowsByFile = rows |> Array.groupBy(fun row -> row.[0])
+
+                        let fileVmMap = x.Files |> Seq.map(fun file -> file.FileName, file) |> Map.ofSeq
+                        rowsByFile |> Array.iter(fun (fileName, rows) ->
+                            rows
+                            |> Array.map(fun row -> int row.[1], int row.[2], row.[3])
+                            |> fileVmMap.[fileName].LoadTranslations)
+                    with
+                    | ex ->
+                        MessageBox.Show(
+                            ex.Message + Environment.NewLine + ex.StackTrace,
+                            "错误", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
+
+            return! click }
+
+        Behavior.clickBehavior click
 
 
 type MasterViewModel () =
@@ -253,15 +295,27 @@ type MasterViewModel () =
             let! (e : BehaviorClickEventArgs) = ()
 
             let dialog = OpenFileDialog ()
-            dialog.Filter <- "Rio.arc|Rio.arc;Rio.arc.orig"
+            dialog.Filter <- "Rio.jp.arc|Rio.jp.arc;Rio.arc"
             let showDialogResult = dialog.ShowDialog x.Window
             if showDialogResult.Value then
-                x.OpenFile dialog.FileName
+                let bakFileName =
+                    if (IO.Path.GetFileName dialog.FileName).Equals("Rio.arc", StringComparison.CurrentCultureIgnoreCase) then
+                        let msgboxResult = MessageBox.Show ("您即将打开 Rio.arc 素材库本体，本程序将为您复制一份备份文件至 Rio.jp.arc。如果 Rio.jp.arc 已存在，将会被覆盖掉。", "素材库文件备份确认", MessageBoxButton.OKCancel, MessageBoxImage.Exclamation)
+                        if msgboxResult = MessageBoxResult.OK then
+                            let bakFileName = IO.Path.Combine (IO.Path.GetDirectoryName dialog.FileName, "Rio.jp.arc")
+                            IO.File.Copy (dialog.FileName, bakFileName, true)
+                            bakFileName
+                        else
+                            null
+                    else
+                        dialog.FileName
+
+                if not (String.IsNullOrEmpty bakFileName) then
+                    x.OpenFile bakFileName
 
             return! click }
 
         Behavior.clickBehavior click
-
 
 
 //module DesignerViewModels =
@@ -275,10 +329,12 @@ type MasterViewModel () =
 //
 //    let masterViewModel =
 //        try
+//            MessageBox.Show "Loading" |> ignore
 //            let vm = MasterViewModel ()
 //            vm.OpenFile @"E:\Program Files\DYNAMIC CHORD\DYNAMIC CHORD feat.[reve parfait] Append Disc\Rio.arc"
-//            vm
-//        with
+//            let archive = vm.Archive.Value.Value
+//            archive.FilesViewSource.MoveCurrentTo archive.Files.[2] |> ignore
+//        withvm
 //        | ex ->
 //            let asm = typeof<SkiaSharp.SKPaint>.Assembly
 //            MessageBox.Show (sprintf "%s\r\n%s" asm.Location asm.CodeBase) |> ignore
