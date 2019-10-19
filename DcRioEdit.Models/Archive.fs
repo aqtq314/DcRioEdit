@@ -205,7 +205,7 @@ module ArchiveIO =
 
     let save outPath archive =
         Archive.updateOffset archive
-        use newfile = File.OpenWrite outPath
+        use newfile = File.Create outPath
         use writer = new BinaryWriter (newfile, shiftJis, true)
         Archive.write writer archive
 

@@ -12,6 +12,7 @@ open System.Text
 module ViewModelUtils =
     let shiftJis = Encoding.GetEncoding 932
     let gb2312 = Encoding.GetEncoding 936
+    let utf8 = Encoding.GetEncoding "utf-8"
 
 
 type ITranscription =

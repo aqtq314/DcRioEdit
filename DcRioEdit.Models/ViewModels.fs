@@ -60,7 +60,10 @@ type Transcription (getContext, range, text, translation) =
             and set value = x.Range |> St.set value
 
 
-type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
+type ScriptFileViewModel (fileModel : ScriptFile) as x =
+    let fileName = fileModel.FileName.Value
+    let content = ArraySeg.ofArrayUnchecked fileModel.Content.Value
+
     let scrollOffset, scrollOffsetW = stwpfp 0
 
     let rec buildContext () =
@@ -71,7 +74,11 @@ type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
             member a.RemoveTranscription item = transcriptions.ForceRemove item }
 
     and transcriptions : _ collectionState =
-        stc (Seq.map (fun builder -> builder buildContext) buildTranscriptions)
+        stc (ScriptFileViewModel.detectTranscriptions content
+        |> Seq.map (fun range ->
+            let text = ScriptFileViewModel.transcribeText content range
+            let translation = text
+            Transcription (buildContext, range, text, translation)))
 
     static member transcribeText content (range : Range) =
         shiftJis.GetString (ArraySeg.toArray (ArraySeg.sub range.Start range.Length content))
@@ -167,20 +174,22 @@ type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
             | Some rangeStartValue ->
                 yield Range.ofStartEnd (rangeStartValue, i) }
 
-    static member load (fileModel : ScriptFile) =
-        let fileName = fileModel.FileName.Value
-        let content = ArraySeg.ofArrayUnchecked fileModel.Content.Value
+    member x.UpdateModel() =
+        let newContent = Array.concat(seq {
+            let content = x.Content |> ArraySeg.toArray
+            let mutable prevEnd = 0
+            for tr in x.Transcriptions do
+                let range = !!tr.Range
+                if prevEnd < range.Start then
+                    yield Array.sub content prevEnd (range.Start - prevEnd)
+                yield gb2312.GetBytes !!tr.Translation
+                prevEnd <- range.End
+            if prevEnd < content.Length then
+                yield Array.sub content prevEnd (content.Length - prevEnd) })
 
-        let buildTranscriptions =
-            ScriptFileViewModel.detectTranscriptions content
-            |> Seq.map (fun range -> fun getContext ->
-                let text = ScriptFileViewModel.transcribeText content range
-                let translation = text
-                Transcription (getContext, range, text, translation))
-            |> Array.ofSeq
-            |> Seq.ofArray
+        printfn "updateModel [%s]: %A" x.FileName (fileModel.Content.Value = newContent)
 
-        ScriptFileViewModel (fileName, content, buildTranscriptions)
+        fileModel.Content.SetValue newContent
 
     interface IScriptFile with
         member x.Content = x.Content
@@ -210,17 +219,17 @@ type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
             (x.Transcriptions :> System.Collections.IEnumerable).GetEnumerator ()
 
 
-type FormatViewModel (extension, files) =
+type FormatViewModel (formatModel : ArchiveFormat) =
+    let extension = formatModel.Extension.Value
+    let files = ArraySeg.mapOfArray ScriptFileViewModel formatModel.Files
+
     member x.Extension : string = extension
     member x.Files : ArraySeg<ScriptFileViewModel> = files
 
-    static member load (formatModel : ArchiveFormat) =
-        let extension = formatModel.Extension.Value
-        let files = ArraySeg.mapOfArray ScriptFileViewModel.load formatModel.Files
-        FormatViewModel (extension, files)
 
+type ArchiveViewModel (filePath, archiveModel : Archive) =
+    let formats = ArraySeg.mapOfArray FormatViewModel archiveModel.Formats
 
-type ArchiveViewModel (filePath, formats) =
     let files =
         formats
         |> ArraySeg.collect (fun (format : FormatViewModel) ->
@@ -248,10 +257,6 @@ type ArchiveViewModel (filePath, formats) =
 
     member x.FileName = IO.Path.GetFileName x.FilePath
 
-    static member load filePath (archiveModel : Archive) =
-        let formats = ArraySeg.mapOfArray FormatViewModel.load archiveModel.Formats
-        ArchiveViewModel (filePath, formats)
-
     member x.LoadTranslation (fileName : string) =
         let csv = TranslationCsv.Load fileName
         let rows = Array.ofSeq csv.Rows
@@ -267,6 +272,7 @@ type ArchiveViewModel (filePath, formats) =
 
             let dialog = OpenFileDialog ()
             dialog.Filter <- "CSV 文件|*.csv"
+            dialog.FileName <- "translation.csv"
             let showDialogResult = dialog.ShowDialog ()
             if showDialogResult.Value then
                 do  try x.LoadTranslation dialog.FileName
@@ -295,6 +301,7 @@ type ArchiveViewModel (filePath, formats) =
 
             let dialog = SaveFileDialog ()
             dialog.Filter <- "CSV 文件|*.csv"
+            dialog.FileName <- "translation.csv"
             let showDialogResult = dialog.ShowDialog ()
             if showDialogResult.Value then
                 do  try x.SaveTranslation dialog.FileName
@@ -309,14 +316,30 @@ type ArchiveViewModel (filePath, formats) =
 
         Behavior.clickBehavior click
 
+    member x.UpdateModel() =
+        x.Files |> ArraySeg.iter(fun file ->
+            file.UpdateModel())
+
+    member x.Save arcPath =
+        x.UpdateModel()
+        ArchiveIO.save arcPath archiveModel
+
     member x.SaveBehavior =
         let rec click = behavior {
             let! (e : BehaviorClickEventArgs) = ()
 
-
-
-
-
+            let dialog = SaveFileDialog ()
+            dialog.Filter <- "Rio.arc|Rio.arc"
+            dialog.FileName <- "Rio.arc"
+            let showDialogResult = dialog.ShowDialog ()
+            if showDialogResult.Value then
+                do  try x.Save dialog.FileName
+                        System.Media.SystemSounds.Beep.Play()
+                    with
+                    | ex ->
+                        MessageBox.Show(
+                            ex.Message + Environment.NewLine + ex.StackTrace,
+                            "错误", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
 
             return! click }
 
@@ -332,7 +355,7 @@ type MasterViewModel () =
 
     member x.OpenArc filePath =
         let archiveModel = ArchiveIO.load filePath
-        let newArchive = ArchiveViewModel.load filePath archiveModel
+        let newArchive = ArchiveViewModel (filePath, archiveModel)
         archive.SetValue (WpfSome newArchive)
 
     member x.OpenArcBehavior =
@@ -341,6 +364,7 @@ type MasterViewModel () =
 
             let dialog = OpenFileDialog ()
             dialog.Filter <- "Rio.jp.arc|Rio.jp.arc;Rio.arc"
+            dialog.FileName <- "Rio.jp.arc"
             let showDialogResult = dialog.ShowDialog x.Window
             if showDialogResult.Value then
                 let bakFileName =
