@@ -12,6 +12,8 @@ open System.Windows.Data
 #nowarn "21"
 
 
+type TranslationCsv = CsvProvider<Schema = @"ScriptName (string), Start (int), End (int), TranslationText (string)", HasHeaders = false>
+
 type TranscriptionContext<'a> =
     abstract GetMinStart : item : 'a -> int
     abstract GetMaxEnd : item : 'a -> int
@@ -92,10 +94,10 @@ type ScriptFileViewModel (fileName, content, buildTranscriptions) as x =
         |> Seq.iter x.Transcriptions.RemoveAt
 
         translations
-        |> Seq.map(fun (startIndex, endIndex, translationText) ->
-            let range = Range.ofStartEnd(startIndex, endIndex)
+        |> Seq.map(fun (row : TranslationCsv.Row) ->
+            let range = Range.ofStartEnd(row.Start, row.End)
             let transcriptionText = x.TranscribeText range
-            Transcription(buildContext, range, transcriptionText, translationText))
+            Transcription(buildContext, range, transcriptionText, row.TranslationText))
         |> Seq.iter x.Transcriptions.Add
 
     member x.GetTranscriptionMinStart (item : Transcription) =
@@ -250,6 +252,15 @@ type ArchiveViewModel (filePath, formats) =
         let formats = ArraySeg.mapOfArray FormatViewModel.load archiveModel.Formats
         ArchiveViewModel (filePath, formats)
 
+    member x.LoadTranslation (fileName : string) =
+        let csv = TranslationCsv.Load fileName
+        let rows = Array.ofSeq csv.Rows
+        let rowsByFile = rows |> Array.groupBy(fun row -> row.ScriptName)
+        
+        let fileVmMap = x.Files |> Seq.map(fun file -> file.FileName, file) |> Map.ofSeq
+        rowsByFile |> Array.iter(fun (fileName, rows) ->
+            rows |> fileVmMap.[fileName].LoadTranslations)
+
     member x.LoadTranslationBehavior =
         let rec click = behavior {
             let! (e : BehaviorClickEventArgs) = ()
@@ -258,20 +269,54 @@ type ArchiveViewModel (filePath, formats) =
             dialog.Filter <- "CSV 文件|*.csv"
             let showDialogResult = dialog.ShowDialog ()
             if showDialogResult.Value then
-                do  try let csv = CsvFile.Load (dialog.FileName, hasHeaders=false)
-                        let rows = Array.ofSeq csv.Rows
-                        let rowsByFile = rows |> Array.groupBy(fun row -> row.[0])
-
-                        let fileVmMap = x.Files |> Seq.map(fun file -> file.FileName, file) |> Map.ofSeq
-                        rowsByFile |> Array.iter(fun (fileName, rows) ->
-                            rows
-                            |> Array.map(fun row -> int row.[1], int row.[2], row.[3])
-                            |> fileVmMap.[fileName].LoadTranslations)
+                do  try x.LoadTranslation dialog.FileName
                     with
                     | ex ->
                         MessageBox.Show(
                             ex.Message + Environment.NewLine + ex.StackTrace,
                             "错误", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
+
+            return! click }
+
+        Behavior.clickBehavior click
+
+    member x.SaveTranslation (fileName : string) =
+        let csv =
+            new TranslationCsv(
+                x.Files |> Seq.collect(fun file ->
+                    file.Transcriptions |> Seq.map(fun transcription ->
+                        let range = !!transcription.Range
+                        TranslationCsv.Row(file.FileName, range.Start, range.End, !!transcription.Translation))))
+        csv.Save fileName
+
+    member x.SaveTranslationBehavior =
+        let rec click = behavior {
+            let! (e : BehaviorClickEventArgs) = ()
+
+            let dialog = SaveFileDialog ()
+            dialog.Filter <- "CSV 文件|*.csv"
+            let showDialogResult = dialog.ShowDialog ()
+            if showDialogResult.Value then
+                do  try x.SaveTranslation dialog.FileName
+                        System.Media.SystemSounds.Beep.Play()
+                    with
+                    | ex ->
+                        MessageBox.Show(
+                            ex.Message + Environment.NewLine + ex.StackTrace,
+                            "错误", MessageBoxButton.OK, MessageBoxImage.Error) |> ignore
+
+            return! click }
+
+        Behavior.clickBehavior click
+
+    member x.SaveBehavior =
+        let rec click = behavior {
+            let! (e : BehaviorClickEventArgs) = ()
+
+
+
+
+
 
             return! click }
 
@@ -285,12 +330,12 @@ type MasterViewModel () =
 
     member x.Archive = archive
 
-    member x.OpenFile filePath =
+    member x.OpenArc filePath =
         let archiveModel = ArchiveIO.load filePath
         let newArchive = ArchiveViewModel.load filePath archiveModel
         archive.SetValue (WpfSome newArchive)
 
-    member x.OpenFileBehavior =
+    member x.OpenArcBehavior =
         let rec click = behavior {
             let! (e : BehaviorClickEventArgs) = ()
 
@@ -311,7 +356,7 @@ type MasterViewModel () =
                         dialog.FileName
 
                 if not (String.IsNullOrEmpty bakFileName) then
-                    x.OpenFile bakFileName
+                    x.OpenArc bakFileName
 
             return! click }
 

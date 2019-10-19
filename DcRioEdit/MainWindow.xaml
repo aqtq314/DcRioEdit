@@ -14,14 +14,17 @@
   </FrameworkElement.DataContext>
   <DockPanel>
     <DockPanel DockPanel.Dock="Top">
-      <Button Padding="15,2" Content="打开 Rio.jp.arc" vm:Behaviors.ClickBehavior="{Binding OpenFileBehavior}"/>
+      <Button Padding="15,2" Content="打开 Rio.jp.arc" vm:Behaviors.ClickBehavior="{Binding OpenArcBehavior}"/>
       <local:OptionPanel OptionValue="{Binding Archive.Value.AsBoxed}">
         <local:OptionPanel.NoneTemplate>
           <DataTemplate/>
         </local:OptionPanel.NoneTemplate>
         <local:OptionPanel.SomeTemplate>
           <DataTemplate>
-            <TextBlock Margin="5,0" Text="{Binding FilePath}" VerticalAlignment="Center"/>
+            <DockPanel>
+              <Button DockPanel.Dock="Right" Padding="15 2" Content="导出 Rio.arc" vm:Behaviors.ClickBehavior="{Binding SaveBehavior}"/>
+              <TextBlock Margin="5,0" Text="{Binding FilePath}" VerticalAlignment="Center"/>
+            </DockPanel>
           </DataTemplate>
         </local:OptionPanel.SomeTemplate>
       </local:OptionPanel>
@@ -33,9 +36,11 @@
       <local:OptionPanel.SomeTemplate>
         <DataTemplate>
           <DockPanel>
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-              <Button Padding="15,2" Content="导入 translation.csv" vm:Behaviors.ClickBehavior="{Binding LoadTranslationBehavior}"/>
-            </StackPanel>
+            <DockPanel DockPanel.Dock="Top">
+              <Button DockPanel.Dock="Left" Padding="15 2" Content="导入 translation.csv" vm:Behaviors.ClickBehavior="{Binding LoadTranslationBehavior}"/>
+              <Button DockPanel.Dock="Right" Padding="15 2" Content="导出 translation.csv" vm:Behaviors.ClickBehavior="{Binding SaveTranslationBehavior}"/>
+              <FrameworkElement/>
+            </DockPanel>
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
