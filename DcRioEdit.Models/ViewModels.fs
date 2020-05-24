@@ -17,14 +17,14 @@ type TranslationCsv = CsvProvider<Schema = @"ScriptName (string), Start (int), E
 type TranscriptionContext<'a> =
     abstract GetMinStart : item : 'a -> int
     abstract GetMaxEnd : item : 'a -> int
-    abstract Transcribe : range : Range -> string
+    abstract Transcribe : range : IntRange -> string
     abstract RemoveTranscription : item : 'a -> unit
 
 type Transcription (getContext, range, text, translation) =
     let range, rangeW = stwpfp range
     let rangeText =
         range
-        |> St.map (fun (range : Range) ->
+        |> St.map (fun (range : IntRange) ->
             sprintf "[0x%X, 0x%X)" range.Start range.End)
 
     let text =
@@ -80,7 +80,7 @@ type ScriptFileViewModel (fileModel : ScriptFile) as x =
             let translation = text
             Transcription (buildContext, range, text, translation)))
 
-    static member transcribeText content (range : Range) =
+    static member transcribeText content (range : IntRange) =
         shiftJis.GetString (ArraySeg.toArray (ArraySeg.sub range.Start range.Length content))
 
     member x.ScrollOffset = scrollOffset
@@ -102,7 +102,7 @@ type ScriptFileViewModel (fileModel : ScriptFile) as x =
 
         translations
         |> Seq.map(fun (row : TranslationCsv.Row) ->
-            let range = Range.ofStartEnd(row.Start, row.End)
+            let range = IntRange.ofStartEnd(row.Start, row.End)
             let transcriptionText = x.TranscribeText range
             Transcription(buildContext, range, transcriptionText, row.TranslationText))
         |> Seq.iter x.Transcriptions.Add
@@ -125,7 +125,7 @@ type ScriptFileViewModel (fileModel : ScriptFile) as x =
             let maxEnd =
                 if index = x.Transcriptions.Count - 1 then x.Content.Length
                 else x.Transcriptions.[index + 1].Range.Value.Start
-            Range.ofStartEnd (minStart, maxEnd)
+            IntRange.ofStartEnd (minStart, maxEnd)
 
     static member detectTranscriptions (content : ArraySeg<byte>) =
         seq {
@@ -166,13 +166,13 @@ type ScriptFileViewModel (fileModel : ScriptFile) as x =
                     i <- i + advance
                 | Some rangeStartValue, false ->
                     if i - rangeStartValue > 2 then
-                        yield Range.ofStartEnd (rangeStartValue, i)
+                        yield IntRange.ofStartEnd (rangeStartValue, i)
                     rangeStart <- None
                     i <- i + advance
             match rangeStart with
             | None -> ()
             | Some rangeStartValue ->
-                yield Range.ofStartEnd (rangeStartValue, i) }
+                yield IntRange.ofStartEnd (rangeStartValue, i) }
 
     member x.UpdateModel() =
         let newContent = Array.concat(seq {
@@ -258,7 +258,8 @@ type ArchiveViewModel (filePath, archiveModel : Archive) =
     member x.FileName = IO.Path.GetFileName x.FilePath
 
     member x.LoadTranslation (fileName : string) =
-        let csv = TranslationCsv.Load fileName
+        use csvStream = new IO.StreamReader(fileName, gb2312)
+        let csv = TranslationCsv.Load csvStream
         let rows = Array.ofSeq csv.Rows
         let rowsByFile = rows |> Array.groupBy(fun row -> row.ScriptName)
         
@@ -293,7 +294,8 @@ type ArchiveViewModel (filePath, archiveModel : Archive) =
                     file.Transcriptions |> Seq.map(fun transcription ->
                         let range = !!transcription.Range
                         TranslationCsv.Row(file.FileName, range.Start, range.End, !!transcription.Translation))))
-        csv.Save fileName
+        let outString = csv.SaveToString()
+        IO.File.WriteAllText(fileName, outString, gb2312)
 
     member x.SaveTranslationBehavior =
         let rec click = behavior {

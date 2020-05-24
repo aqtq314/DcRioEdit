@@ -16,17 +16,17 @@ module ViewModelUtils =
 
 
 type ITranscription =
-    abstract Range : Range with get, set
+    abstract Range : IntRange with get, set
 
 type IScriptFile =
     inherit IEnumerable<ITranscription>
     abstract Content : ArraySeg<byte>
     abstract Item : index : int -> ITranscription with get
     abstract Count : int
-    abstract InsertNew : index : int -> range : Range -> ITranscription
+    abstract InsertNew : index : int -> range : IntRange -> ITranscription
     abstract Remove : item : ITranscription -> unit
     abstract RemoveAt : index : int -> unit
-    abstract GetMaxRange : item : ITranscription -> Range
+    abstract GetMaxRange : item : ITranscription -> IntRange
 
 [<AutoOpen>]
 module ScriptFileUtils =

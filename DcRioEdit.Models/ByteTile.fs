@@ -217,8 +217,8 @@ type ByteTileMouseOverStatus =
 
     member x.AsRange =
         match x with
-        | OverSingleByte index -> Range.unitLength index
-        | OverDoubleByte firstIndex -> Range.ofLength firstIndex 2
+        | OverSingleByte index -> IntRange.unitLength index
+        | OverDoubleByte firstIndex -> IntRange.ofLength firstIndex 2
 
 
 type ByteTileMouseDownButton<'l, 'r> =
@@ -372,7 +372,7 @@ type ByteTile () =
         let pos = mousePos + Vector (hoffset, 0.0)
         let row = int pos.Y / charHeight + x.VerticalOffset
 
-        let columnRange = Range.ofLength (rowNumberWidth + columnSpacing) (byteCodeWidth * x.CharsPerRow)
+        let columnRange = IntRange.ofLength (rowNumberWidth + columnSpacing) (byteCodeWidth * x.CharsPerRow)
         let col = (int pos.X - columnRange.Start) / byteCodeWidth
 
         let normalizedRow = row |> clamp 0 (x.TotalRowCount - 1)
@@ -395,7 +395,7 @@ type ByteTile () =
         let pos = mousePos + Vector (hoffset, 0.0)
         let row = int pos.Y / charHeight + x.VerticalOffset
 
-        let columnRange = Range.ofLength (rowNumberWidth + byteCodeWidth * x.CharsPerRow + columnSpacing * 2) (charWidth * x.CharsPerRow)
+        let columnRange = IntRange.ofLength (rowNumberWidth + byteCodeWidth * x.CharsPerRow + columnSpacing * 2) (charWidth * x.CharsPerRow)
         let col = (int pos.X - columnRange.Start) / charWidth
 
         let normalizedRow = row |> clamp 0 (x.TotalRowCount - 1)
@@ -470,7 +470,7 @@ type ByteTile () =
                             |> Option.iter (fun trsc ->
                                 let baseRange = trsc.Range.Union mouseDownByte.AsRange
                                 let bytes = x.Bytes
-                                let maxRange = Range.ofStartEnd (0, bytes.Length)
+                                let maxRange = IntRange.ofStartEnd (0, bytes.Length)
                                 let rec expand checkDelta increment offset =
                                     let newOffset = offset + checkDelta
                                     if maxRange.Contains newOffset && maxRange.Contains (newOffset + 1) &&
@@ -481,8 +481,8 @@ type ByteTile () =
                                 let newRange =
                                     let newStartValue = min (expand (-2) (-2) baseRange.Start) (expand (-2) (-2) (baseRange.Start + 1))
                                     let newEndValue = max (expand 0 2 baseRange.End) (expand 0 2 (baseRange.End - 1))
-                                    Range.ofStartEnd (newStartValue, newEndValue)
-                                    |> Range.intersect (x.ScriptFile.GetMaxRange trsc)
+                                    IntRange.ofStartEnd (newStartValue, newEndValue)
+                                    |> IntRange.intersect (x.ScriptFile.GetMaxRange trsc)
                                     |> Option.get
                                 trsc.Range <- newRange))
 
@@ -530,7 +530,7 @@ type ByteTile () =
                             index
                     let newRange =
                         rangeAnchor.Union mouseOverTile.AsRange
-                        |> Range.intersect (x.ScriptFile.GetMaxRange trsc)
+                        |> IntRange.intersect (x.ScriptFile.GetMaxRange trsc)
                         |> Option.get
                     trsc.Range <- newRange
                     mouseDownStatus
@@ -640,7 +640,7 @@ type ByteTile () =
             let voffset = min x.VerticalOffset (int (Math.Ceiling (float bytes.Length / float charsPerRow)) - 1)
             let rowCount = x.VisibleRowCount
             let startCharIndex = voffset * charsPerRow
-            let visibleChars = Range.ofStartEnd (startCharIndex, min (startCharIndex + rowCount * charsPerRow) bytes.Length)
+            let visibleChars = IntRange.ofStartEnd (startCharIndex, min (startCharIndex + rowCount * charsPerRow) bytes.Length)
 
             if redrawTileBuffer then
                 buffer.DrawTile <| fun surface ->
@@ -698,7 +698,7 @@ type ByteTile () =
                     canvas.DrawBitmap (buffer.TileBitmap, 0.0f, 0.0f)
                     use __ = canvas.SaveLoadCurrentTransform ()
 
-                    let buildSelectionPath (range : Range) =
+                    let buildSelectionPath (range : IntRange) =
                         let isSameRow = range.Start / charsPerRow = (range.End - 1) / charsPerRow
                         let path = new SKPath ()
                         let buildPath startTop startLeft endBottom endRight leftMost rightMost =
@@ -737,7 +737,7 @@ type ByteTile () =
 
                     do  use __ = canvas.SaveLoadCurrentTransform ()
                         canvas.Translate (0.5f, 0.5f)
-                        //let path = buildSelectionPath (Range.ofLength 120 22)
+                        //let path = buildSelectionPath (IntRange.ofLength 120 22)
                         //canvas.DrawPath (path, selectionPaint)
                         //canvas.DrawPath (path, mouseOverPaint)
 

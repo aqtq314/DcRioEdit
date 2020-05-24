@@ -44,7 +44,7 @@ module Lazy =
 
 
 module String =
-    let contains value (s : string) =
+    let contains(value : string)(s : string) =
         s.Contains value
 
     let containsChar value (s : string) =
@@ -97,7 +97,7 @@ module Disposable =
             member __.Dispose () = dispose () }
 
     let createOnce dispose =
-        let dispose = Lazy.Create dispose
+        let dispose = Lazy<_>.Create dispose
         { new IDisposable with
             member __.Dispose () = (dispose : Lazy<_>).Force () }
 
